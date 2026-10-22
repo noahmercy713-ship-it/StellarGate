@@ -1261,3 +1261,39 @@ fn layout_reflows_at_320px_and_200_percent_zoom() {
          supported viewport (#823)"
     );
 }
+
+/// Table rows must use `content-visibility: auto` to stay responsive with
+/// thousands of loaded rows (#805).
+///
+/// After many "Load more" pages the DOM holds thousands of rows. Without
+/// `content-visibility: auto` the browser lays out and paints every row
+/// whether it is on screen or not, and scrolling janks. The property skips
+/// that work for off-screen rows while keeping them in the DOM, so keyboard
+/// navigation (j/k, Tab), find-in-page and screen-reader access all work
+/// exactly as before.
+///
+/// `contain-intrinsic-size` is required alongside it: without a size estimate
+/// an un-rendered row collapses to zero height and the scrollbar jumps as the
+/// user scrolls into a row that suddenly renders at its real height.
+#[test]
+fn table_rows_use_content_visibility_for_responsiveness() {
+    assert!(
+        DASHBOARD_CSS.contains("content-visibility: auto;"),
+        "payment rows must use content-visibility: auto so the browser skips \
+         layout and paint for off-screen rows (#805)"
+    );
+    assert!(
+        DASHBOARD_CSS.contains("contain-intrinsic-size: auto 43px;"),
+        "each row needs a contain-intrinsic-size estimate so off-screen rows \
+         do not collapse to zero height and cause scrollbar jumps (#805)"
+    );
+    // The mobile card layout stacks cells vertically, so the desktop intrinsic
+    // height (43px) is far too short; the override must exist inside the
+    // narrow-viewport media query.
+    assert!(
+        DASHBOARD_CSS.contains("contain-intrinsic-size: auto 240px;"),
+        "the mobile card layout needs a larger contain-intrinsic-size because \
+         each row is a stack of labelled cells rather than a single-line table \
+         row (#805)"
+    );
+}

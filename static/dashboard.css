@@ -712,6 +712,31 @@ kbd {
 .payments tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* ── Content-visibility: keep the table responsive at scale (#805) ────────
+ *
+ * After many "Load more" pages the DOM holds thousands of rows and scrolling
+ * janks because the browser lays out and paints every one of them, on screen
+ * or not. `content-visibility: auto` tells the browser to skip that work for
+ * rows that are off-screen while keeping them in the accessibility tree and
+ * the layout — so keyboard navigation (j/k, Tab), find-in-page and
+ * screen-reader access all work exactly as before. The browser only needs a
+ * size estimate for the un-rendered rows, which `contain-intrinsic-size`
+ * supplies; without it the row would collapse to zero height and the
+ * scrollbar would jump as the user scrolls into a row and it suddenly
+ * renders at its real height.
+ *
+ * The intrinsic height is the row's natural height in this layout: cell
+ * padding (0.65rem × 2) plus one line of content at the body font/line-height
+ * (15px / 1.5 ≈ 22.5px), totalling ~43px. The `auto` keyword lets the browser
+ * remember the real height once a row has been rendered, so the estimate only
+ * matters for rows the user has never scrolled to.
+ */
+.payments tbody tr {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 43px;
+}
+
 .payments .select-col {
   width: 1%;
 }
@@ -1318,6 +1343,15 @@ kbd {
   .table-scroll {
     max-height: none;
     overflow-y: visible;
+  }
+
+  /* #805: in the card layout each row is a stack of labelled cells, so the
+     43px intrinsic height from the desktop rule is far too short and would
+     cause the scrollbar to jump as rows render at their real height. A card
+     row with ~7 visible cells (Select is hidden at this width) is roughly
+     240px tall — cell padding (0.65rem × 2) plus a line of content per cell. */
+  .payments tbody tr {
+    contain-intrinsic-size: auto 240px;
   }
 
   /* #773: the new columns are ordinary cells in the card layout, so they pick
